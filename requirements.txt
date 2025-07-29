@@ -5,3 +5,4 @@ langchain-community
 langchain==0.0.273
 flask
 pypdf
+-e .
