@@ -207,4 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 
-model/llama-2-7b-chat.ggmlv3.q4_0.bin
+model/llama-2-7b-chat.ggmlv3.q2_K.bin
