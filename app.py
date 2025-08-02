@@ -38,6 +38,10 @@ except Exception as e:
     logger.error(f"Error initializing Pinecone client or docsearch: {e}")
     docsearch = None
 
+# Check if docsearch is properly initialized
+if docsearch is None:
+    logger.error("docsearch is not initialized. QA chain will not work properly.")
+
 PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
 
 chain_type_kwargs = {"prompt": PROMPT}
@@ -49,8 +53,10 @@ try:
         model="model/llama-2-7b-chat.ggmlv3.q2_K.bin",
         model_type="llama",
         config={
-            'max_new_tokens': 256,  # Reduced for faster response
-            'temperature': 0.5      # Lower temperature for more focused output
+            'max_new_tokens': 512,  # Increased for better responses
+            'temperature': 0.7,     # More natural responses
+            'top_p': 0.95,
+            'repetition_penalty': 1.15
         }
     )
     logger.info("LLM 'llama' created successfully with optimized config.")
@@ -59,12 +65,17 @@ except Exception as e:
     llm = None
 
 
-qa=RetrievalQA.from_chain_type(
-    llm=llm, 
-    chain_type="stuff", 
-    retriever=docsearch.as_retriever(search_kwargs={'k': 2}),
-    return_source_documents=True, 
-    chain_type_kwargs=chain_type_kwargs)
+# Check if required components are initialized before creating QA chain
+if llm is None or docsearch is None:
+    logger.error("LLM or docsearch not initialized. QA chain will not work properly.")
+    qa = None
+else:
+    qa=RetrievalQA.from_chain_type(
+        llm=llm, 
+        chain_type="stuff", 
+        retriever=docsearch.as_retriever(search_kwargs={'k': 2}),
+        return_source_documents=True, 
+        chain_type_kwargs=chain_type_kwargs)
 
 
 
@@ -74,12 +85,21 @@ def index():
 
 @app.route("/get", methods=["GET", "POST"])
 def chat():
-    msg = request.form["msg"]
-    input = msg
-    print(input)
-    result=qa.invoke({"query": input})
-    print("Response : ", result["result"])
-    return jsonify(result["result"])
+    try:
+        msg = request.form["msg"]
+        input = msg
+        print(input)
+        
+        # Check if QA chain is properly initialized
+        if qa is None:
+            return jsonify({"response": "Sorry, the chatbot is not properly initialized. Please check the server logs."})
+        
+        result = qa.invoke({"query": input})
+        print("Response : ", result["result"])
+        return jsonify({"response": result["result"]})
+    except Exception as e:
+        print(f"Error processing request: {e}")
+        return jsonify({"response": "Sorry, I encountered an error processing your request. Please try again."})
 
 
 if __name__ == '__main__':

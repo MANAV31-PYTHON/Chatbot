@@ -104,6 +104,16 @@
             }).done(function (data) {
                 $("#typing").remove(); // remove typing message
 
+                // Handle different response formats
+                let responseText = "No response";
+                if (typeof data === "string") {
+                    responseText = data;
+                } else if (data && data.response) {
+                    responseText = data.response;
+                } else if (data && data.result) {
+                    responseText = data.result;
+                }
+
                 const botHtml = `
                     <div class="d-flex justify-content-start mb-4">
                         <div class="img_cont_msg">
@@ -111,11 +121,27 @@
                                  class="rounded-circle user_img_msg">
                         </div>
                         <div class="msg_cotainer">
-                            ${data.response}
+                            ${responseText}
                             <span class="msg_time">${str_time}</span>
                         </div>
                     </div>`;
                 $("#messageFormeight").append($.parseHTML(botHtml));
+                scrollToBottom();
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                $("#typing").remove(); // remove typing message
+                
+                const errorHtml = `
+                    <div class="d-flex justify-content-start mb-4">
+                        <div class="img_cont_msg">
+                            <img src="https://www.prdistribution.com/spirit/uploads/pressreleases/2019/newsreleases/d83341deb75c4c4f6b113f27b1e42cd8-chatbot-florence-already-helps-thousands-of-patients-to-remember-their-medication.png"
+                                 class="rounded-circle user_img_msg">
+                        </div>
+                        <div class="msg_cotainer">
+                            Error: Failed to get response. Please try again.
+                            <span class="msg_time">${str_time}</span>
+                        </div>
+                    </div>`;
+                $("#messageFormeight").append($.parseHTML(errorHtml));
                 scrollToBottom();
             });
         });
