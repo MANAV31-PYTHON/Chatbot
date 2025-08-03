@@ -53,8 +53,8 @@ try:
         model="model/llama-2-7b-chat.ggmlv3.q2_K.bin",
         model_type="llama",
         config={
-            'max_new_tokens': 512,  # Increased for better responses
-            'temperature': 0.7,     # More natural responses
+            'max_new_tokens': 50,  # Increased for better responses
+            'temperature': 0.1,     # More natural responses
             'top_p': 0.95,
             'repetition_penalty': 1.15
         }
@@ -83,7 +83,7 @@ else:
 def index():
     return render_template('chat.html')
 
-@app.route("/get", methods=["GET", "POST"])
+'''@app.route("/get", methods=["GET", "POST"])
 def chat():
     try:
         msg = request.form["msg"]
@@ -99,7 +99,16 @@ def chat():
         return jsonify({"response": result["result"]})
     except Exception as e:
         print(f"Error processing request: {e}")
-        return jsonify({"response": "Sorry, I encountered an error processing your request. Please try again."})
+        return jsonify({"response": "Sorry, I encountered an error processing your request. Please try again."})'''
+@app.route("/get", methods=["GET", "POST"])
+def chat():
+    msg = request.form["msg"]
+    input = msg
+    print(input)
+    result=qa.invoke({"query": input})
+    print("Response : ", result["result"])
+    return str(result["result"])
+
 
 
 if __name__ == '__main__':
